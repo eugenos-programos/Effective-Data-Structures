@@ -1,135 +1,275 @@
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-struct Tree
+struct SplayTree
 {
-    int data;
-    struct Tree* right,* left;
-    char* name;
-}*root;
-
-
-struct Tree* create_root(int data, char* name)
-{
-    struct Tree* new_node;
-    new_node->data = data;
-    new_node->name = name;
-    new_node->left = new_node->right = NULL;
-    return new_node;
+    struct SplayNode
+    {
+        struct SplayNode *leftChild;
+        struct SplayNode *rightChild;
+        struct SplayNode *parent;
+        void *data;
+    } * root;
 }
 
-struct pair{
-    int data;
-    char* name;
-}el;
-
-void make_balance(struct Tree** p, int n, int k, int* a, struct pair* array_1)
+struct SplayNode *
+newNode(void *data)
 {
-    if(n == k)
+    struct SplayNode *node = (struct SplayNode *)malloc(sizeof(struct SplayNode));
+    node->data = data;
+    node->leftChild = node->rightChild = NULL;
+}
+
+void deleteNode(struct SplayNode *node)
+{
+    free(node->leftChild);
+    free(node->rightChild);
+}
+
+struct SplayNode *_Minimum(struct SplayNode *localRoot)
+{
+    struct SplayNode *minimum = localRoot;
+
+    while (minimum->leftChild != NULL)
+        minimum = minimum->leftChild;
+
+    return minimum;
+}
+
+struct SplayNode *_Maximum(struct SplayNode *localRoot)
+{
+    struct SplayNode *maximum = localRoot;
+
+    while (maximum->rightChild != NULL)
+        maximum = maximum->rightChild;
+
+    return maximum;
+}
+
+struct SplayNode *_Predecessor(struct SplayNode *localRoot)
+{
+    struct SplayNode *predecessor = localRoot;
+    if (predecessor->leftChild != NULL)
     {
-        *p = NULL;
-        return;
+        predecessor = _Maximum(predecessor->leftChild);
     }
-    int m = (n + k) / 2;
-    *p = malloc(sizeof(**p));
-    (*p)->data = a[m];
-    int length = sizeof(array_1) / sizeof(el);
-    for(int i = 0;i < length; ++i)
+    else
     {
-        if(array_1[i].data == a[m])
+        while (predecessor != root || predecessor != predecessor->parent->rightChild)
         {
-            (*p)->name = array_1[i].name;
-            break;
+            predecessor = predecessor->parent;
         }
     }
-    make_balance(&(*p)->left, n, m, a, array_1);
-    make_balance(&(*p)->right, m + 1, k, a, array_1);
+    return predecessor;
 }
 
-void print_tree(struct Tree* p, int level)
+struct SplayNode *Successor(struct SplayNode *localRoot)
 {
-    if(p)
+    struct SplayNode *successor = localRoot;
+    if (successor->rightChild != NULL)
     {
-        for(int i = 0; i < level; ++i) printf("    ");
-        printf("%d %c\n", p->data, p->name);
-        print_tree(p->right, level + 1);
-        print_tree(p->left, level + 1);
+        successor = _Minimum(successor->rightChild);
     }
-}
-
-struct Tree* del_info(struct Tree* root, int key)
-{
-    struct Tree* Del, prev_del, r, prev_r;
-    Del = root;
-    prev_del = NULL;
-    while(Del != NULL && Del->data != key)
-    {
-        prev_del = Del;
-        if(Del->data > key) Del = Del->left;
-        else Del = Del->right;
-    }
-    if(Del == NULL)
-    {
-        printf("Key doesn't found!\n");
-        return root;
-    }
-    if(Del->right == NULL) r = Del->left;
     else
-        if (Del->left == NULL) r = Del->right;
+    {
+        while (successor != root || successor != successor->parent->leftChild)
+        {
+            successor = successor->parent;
+        }
+    }
+    return successor;
+}
+
+void _LeftRotate(struct SplayNode *localRoot)
+{
+    struct SplayNode *rightChild = localRoot->rightChild;
+
+    localRoot->rightChild = rightChild->leftChild;
+    if (rightChild->leftChild != NULL)
+        rightChild->leftChild->parent = localRoot;
+
+    _Transplant(localRoot, rightChild);
+
+    rightChild->leftChild = localRoot;
+    rightChild->leftChild->parent = rightChild;
+}
+
+void _RightRotate(struct SplayNode *localRoot)
+{
+    struct SplayNode *leftChild = localRoot->leftChild;
+
+    localRoot->leftChild = leftChild->rightChild;
+    if (leftChild->rightChild != NULL)
+        leftChild->rightChild->parent = localRoot;
+
+    _Transplant(localRoot, leftChild);
+
+    leftChild->rightChild = localRoot;
+    leftChild->rightChild->parent = leftChild;
+}
+
+void _Splay(struct SplayNode *pivotElement)
+{
+    while (pivotElement != root)
+    {
+        if (pivotElement->parent == root)
+        {
+
+            if (pivotElement == pivotElement->parent->leftChild)
+            {
+                _RightRotate(pivotElement->parent);
+            }
+            else if (pivotElement == pivotElement->parent->rightChild)
+            {
+                _LeftRotate(pivotElement->parent);
+            }
+        }
         else
         {
-            prev_r = Del;
-            r = Del->left;
-            while (r->right != NULL)
+            // Zig-Zig step.
+            if (pivotElement == pivotElement->parent->leftChild &&
+                pivotElement->parent == pivotElement->parent->parent->leftChild)
             {
-                prev_r = r;
-                r = r->right;
+
+                _RightRotate(pivotElement->parent->parent);
+                _RightRotate(pivotElement->parent);
             }
-			if(prev_r == Del)  r->right = Del->right;
-			else {
-				r->right = Del->right;
-				prev_r->right = r->left;
-				r->left = Del->left;    // R->left = Prev_R
-			}
+            else if (pivotElement == pivotElement->parent->rightChild &&
+                     pivotElement->parent == pivotElement->parent->parent->rightChild)
+            {
+
+                _LeftRotate(pivotElement->parent->parent);
+                _LeftRotate(pivotElement->parent);
+            }
+            // Zig-Zag step.
+            else if (pivotElement == pivotElement->parent->rightChild &&
+                     pivotElement->parent == pivotElement->parent->parent->leftChild)
+            {
+
+                _LeftRotate(pivotElement->parent);
+                _RightRotate(pivotElement->parent);
+            }
+            else if (pivotElement == pivotElement->parent->leftChild &&
+                     pivotElement->parent == pivotElement->parent->parent->rightChild)
+            {
+
+                _RightRotate(pivotElement->parent);
+                _LeftRotate(pivotElement->parent);
+            }
+        }
     }
-	if (Del == root) root = r;			// Удаляя корень, заменяем его на R
-	else
-	if (Del->data < prev_del->data)
-			prev_del->left = r;				// На левую ветвь
-		else	prev_del->right = r;
-						// На правую ветвь
-	delete Del;
-	return root;
 }
 
-void create_list(struct Tree* root,int key, char* name) {
-    if (root == NULL) { printf("Empty tree\n"); return; };
-    struct Tree* prev, * t;
-    bool find = true;
-    t = root;
-    prev = t;
-    while ((t != NULL) && find) {
-        prev = t;
-        if (t->data == key) {
-            find = false;
-            printf("Key has been used! Please try again!");
-        }
-        else {
-            if (key < t->data)t = t->left;
-            else t = t->right;
-        }
+struct SplayTree *newTree()
+{
+    struct SplayTree *tree;
+    tree->root = NULL;
+    return tree;
+}
+
+void deleteTree(struct SplayTree *tree)
+{
+    free(tree);
+}
+
+void Insert(struct SplayTree* tree, const T &key)
+{
+    struct SplayNode *preInsertPlace = NULL;
+    struct SplayNode *insertPlace = root;
+
+    while (insertPlace != NULL)
+    {
+        preInsertPlace = insertPlace;
+
+        if (insertPlace->data() < key)
+            insertPlace = insertPlace->rightChild;
+        else if (key <= insertPlace->data)
+            insertPlace = insertPlace->leftChild;
     }
-    if (prev == NULL) return;
-    if (find) {
-        t = create_root(key, name);
-        if (key > prev->data)prev->right = t;
-        else prev->left = t;
+
+    struct SplayNode *insertElement = newNode(key);
+    insertElement->parent = preInsertPlace;
+
+    if (preInsertPlace == NULL)
+        tree->root = insertElement;
+    else if (preInsertPlace->data < insertElement->data)
+        preInsertPlace->rightChild = insertElement;
+    else if (insertElement->data < preInsertPlace->data)
+        preInsertPlace->leftChild = insertElement;
+
+    _Splay(insertElement);
+}
+
+void Remove(struct SplayTree* tree, const T &key)
+{
+    struct SplayNode *removeElement = _Search(key);
+
+    if (removeElement != NULL)
+    {
+        if (removeElement->rightChild == NULL)
+            _Transplant(removeElement, removeElement->leftChild);
+        else if (removeElement->leftChild == NULL)
+            _Transplant(removeElement, removeElement->rightChild);
+        else
+        {
+            struct SplayNode *newLocalRoot = _Minimum(removeElement->rightChild);
+
+            if (newLocalRoot->parent != removeElement)
+            {
+
+                _Transplant(newLocalRoot, newLocalRoot->rightChild);
+
+                newLocalRoot->rightChild = removeElement->rightChild;
+                newLocalRoot->rightChild->parent = newLocalRoot;
+            }
+
+            _Transplant(removeElement, newLocalRoot);
+
+            newLocalRoot->leftChild = removeElement->leftChild;
+            newLocalRoot->leftChild->parent = newLocalRoot;
+
+            _Splay(newLocalRoot);
+        }
+
+        free(removeElement);
+    }
+}
+
+bool Search(const T &key)
+{ 
+    return _Search(key) != NULL; 
+}
+
+bool isEmpty(struct SplayTree* tree) const {
+    return tree->root == NULL;
+}
+
+T Successor(const T &key)
+{
+    if (_Successor(_Search(key)) != NULL)
+    {
+        return _Successor(_Search(key))->getValue();
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+T Predecessor(const T &key)
+{
+    if (_Predecessor(_Search(key)) != NULL)
+    {
+        return _Predecessor(_Search(key))->getValue();
+    }
+    else
+    {
+        return -1;
     }
 }
 
 int main(int argc, char const *argv[])
 {
-    char* name = "Hello!";
-    printf("%c", name[2]);
+
     return 0;
 }
