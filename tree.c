@@ -16,8 +16,6 @@ struct SplayTree
 struct SplayNode *newNode(int *data)
 {
     struct SplayNode *node = malloc(sizeof(*node));
-    node->leftChild = malloc(sizeof(*node));
-    node->rightChild = malloc(sizeof(*node));
     node->data = *data;
     node->leftChild = node->rightChild = NULL;
     return node;
@@ -143,6 +141,7 @@ void _Splay(struct SplayTree *tree, struct SplayNode *pivotElement)
         {
             // Zig-Zig step.
             if (pivotElement == pivotElement->parent->leftChild &&
+                pivotElement->parent->parent != NULL &&
                 pivotElement->parent == pivotElement->parent->parent->leftChild)
             {
 
@@ -150,7 +149,8 @@ void _Splay(struct SplayTree *tree, struct SplayNode *pivotElement)
                 _RightRotate(tree, pivotElement->parent);
             }
             
-            else if (pivotElement->parent->parent && pivotElement == pivotElement->parent->rightChild &&
+            else if (pivotElement->parent->parent != NULL &&
+                     pivotElement->parent->parent && pivotElement == pivotElement->parent->rightChild &&
                      pivotElement->parent == pivotElement->parent->parent->rightChild)
             {
                 _LeftRotate(tree, pivotElement->parent->parent);
@@ -158,6 +158,7 @@ void _Splay(struct SplayTree *tree, struct SplayNode *pivotElement)
             }
             // Zig-Zag step.
             else if (pivotElement == pivotElement->parent->rightChild &&
+                     pivotElement->parent->parent != NULL &&
                      pivotElement->parent == pivotElement->parent->parent->leftChild)
             {
 
@@ -165,6 +166,7 @@ void _Splay(struct SplayTree *tree, struct SplayNode *pivotElement)
                 _RightRotate(tree, pivotElement->parent);
             }
             else if (pivotElement == pivotElement->parent->leftChild &&
+                     pivotElement->parent->parent != NULL &&
                      pivotElement->parent == pivotElement->parent->parent->rightChild)
             {
 
@@ -198,8 +200,6 @@ struct SplayTree *newTree()
 {
     struct SplayTree *tree = malloc(sizeof(*tree));
     tree->root = malloc(sizeof(*tree->root));
-    tree->root->leftChild = malloc(sizeof(*tree->root->leftChild));
-    tree->root->rightChild = malloc(sizeof(*tree->root->rightChild));
     tree->root = NULL;
     return tree;
 }
@@ -212,6 +212,7 @@ void deleteTree(struct SplayTree *tree)
 void Insert(struct SplayTree *tree, int *key)
 {
     struct SplayNode *preInsertPlace = malloc(sizeof(*preInsertPlace));
+    preInsertPlace = NULL;
     struct SplayNode *insertPlace = tree->root;
 
     while (insertPlace != NULL)
@@ -308,5 +309,6 @@ int main(int argc, char const *argv[])
     struct SplayTree *tree = newTree();
     int a = 8;
     Insert(tree, &a);
+    printf("%d", Search(tree, &a));
     return 0;
 }
