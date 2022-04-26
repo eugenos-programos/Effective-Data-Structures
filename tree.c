@@ -2,313 +2,437 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-struct SplayTree
-{
-    struct SplayNode
-    {
-        struct SplayNode *leftChild;
-        struct SplayNode *rightChild;
-        struct SplayNode *parent;
-        int data;
-    } * root;
-};
+int err = -1;
+void * error_value = &err;
 
-struct SplayNode *newNode(int *data)
+typedef struct splay_node
 {
-    struct SplayNode *node = malloc(sizeof(*node));
-    node->data = *data;
-    node->leftChild = node->rightChild = NULL;
+    struct splay_node * left;
+    struct splay_node * right;
+    struct splay_node * parent;
+    void * data;
+} splay_node;
+
+typedef struct splay_tree
+{
+    splay_node * root;
+} splay_tree;
+
+/*!
+ * Creates new splay node based on input data
+ * @param data pointer on input data
+ * @returns Returns A splay node with input data
+ */
+splay_node * new_node(void * data)
+{
+    splay_node * node = malloc(sizeof(*node));
+    node->data = data;
+    node->left = node->right = NULL;
     return node;
 }
 
-void deleteNode(struct SplayNode *node)
+/*!
+ * Cleans memory occupied by splay node
+ * @param node Node that needs to be stung
+ */
+void delete_node(splay_node * node)
 {
-    free(node->leftChild);
-    free(node->rightChild);
+    free(node->left);
+    free(node->right);
 }
 
-struct SplayNode *_Minimum(struct SplayNode *localRoot)
+/**
+ * Finds minimal splay node from the whole tree
+ * @param localRoot Splay node pointer on tree root
+ * @returns Returns A minimal splay node  
+ */
+splay_node * minimum(splay_node * localRoot)
 {
-    struct SplayNode *minimum = localRoot;
+    splay_node * minimum = localRoot;
 
-    while (minimum->leftChild != NULL)
-        minimum = minimum->leftChild;
+    while (minimum->left != NULL)
+    {
+        minimum = minimum->left;
+    }
 
     return minimum;
 }
 
-struct SplayNode *_Maximum(struct SplayNode *localRoot)
-{
-    struct SplayNode *maximum = localRoot;
 
-    while (maximum->rightChild != NULL)
-        maximum = maximum->rightChild;
+/*!
+ * Finds maximal from the whole tree
+ * @param local_root Splay node pointer on tree root
+ * @returns Returns A maximal splay node 
+ */
+splay_node * maximum(splay_node * local_root)
+{
+    splay_node * maximum = local_root;
+
+    while (maximum->right != NULL)
+    {
+        maximum = maximum->right;
+    }
 
     return maximum;
 }
 
-struct SplayNode *_Predecessor(struct SplayTree *tree, struct SplayNode *localRoot)
+splay_node * _predecessor(splay_tree * tree, splay_node * local_root)
 {
-    struct SplayNode *predecessor = localRoot;
-    if (predecessor->leftChild != NULL)
+    splay_node * _predecessor = local_root;
+    if (_predecessor->left != NULL)
     {
-        predecessor = _Maximum(predecessor->leftChild);
+        _predecessor = maximum(_predecessor->left);
     }
     else
     {
-        while (predecessor != tree->root || predecessor != predecessor->parent->rightChild)
+        while (_predecessor != tree->root || _predecessor != _predecessor->parent->right)
         {
-            predecessor = predecessor->parent;
+            _predecessor = _predecessor->parent;
         }
     }
-    return predecessor;
+    return _predecessor;
 }
 
-struct SplayNode *_Successor(struct SplayTree *tree, struct SplayNode *localRoot)
+splay_node * _successor(splay_tree * tree, splay_node * local_root)
 {
-    struct SplayNode *successor = localRoot;
-    if (successor->rightChild != NULL)
+    splay_node * _successor = local_root;
+    if (_successor->right != NULL)
     {
-        successor = _Minimum(successor->rightChild);
+        _successor = minimum(_successor->right);
     }
     else
     {
-        while (successor != tree->root || successor != successor->parent->leftChild)
+        while (_successor != tree->root || _successor != _successor->parent->left)
         {
-            successor = successor->parent;
+            _successor = _successor->parent;
         }
     }
-    return successor;
+    return _successor;
 }
 
-void _Transplant(struct SplayTree *tree, struct SplayNode *localParent, struct SplayNode *localChild)
+/*!
+ * Transplants tree based on local parent and local child
+ * @param tree Splay tree used for transplanting
+ * @param local_parent Splay node used as parent for transplanting
+ * @param local_child Splay node used as child for transplanting
+ */
+void transplant(splay_tree * tree, splay_node * local_parent, splay_node * local_child)
 {
-    if (localParent->parent == NULL)
-        tree->root = localChild;
-    else if (localParent == localParent->parent->leftChild)
-        localParent->parent->leftChild = localChild;
-    else if (localParent == localParent->parent->rightChild)
-        localParent->parent->rightChild = localChild;
-
-    if (localChild != NULL)
-        localChild->parent = localParent->parent;
-}
-
-void _LeftRotate(struct SplayTree *tree, struct SplayNode *localRoot)
-{
-    struct SplayNode *rightChild = localRoot->rightChild;
-    localRoot->rightChild = rightChild->leftChild;
-    if (rightChild->leftChild != NULL)
-        rightChild->leftChild->parent = localRoot;
-
-    _Transplant(tree, localRoot, rightChild);
-
-    rightChild->leftChild = localRoot;
-    rightChild->leftChild->parent = rightChild;
-}
-
-void _RightRotate(struct SplayTree *tree, struct SplayNode *localRoot)
-{
-    struct SplayNode *leftChild = localRoot->leftChild;
-
-    localRoot->leftChild = leftChild->rightChild;
-    if (leftChild->rightChild != NULL)
-        leftChild->rightChild->parent = localRoot;
-
-    _Transplant(tree, localRoot, leftChild);
-
-    leftChild->rightChild = localRoot;
-    leftChild->rightChild->parent = leftChild;
-}
-
-void _Splay(struct SplayTree *tree, struct SplayNode *pivotElement)
-{
-    while (pivotElement != tree->root)
+    if (local_parent->parent == NULL)
     {
-        if (pivotElement->parent == tree->root)
+        tree->root = local_child;
+    }
+    else if (local_parent == local_parent->parent->left)
+    {
+        local_parent->parent->left = local_child;
+    }
+    else if (local_parent == local_parent->parent->right)
+    {
+        local_parent->parent->right = local_child;
+    }
+
+    if (local_child != NULL)
+    {
+        local_child->parent = local_parent->parent;
+    }
+}
+
+/*!
+ * Rotates tree in left order
+ * @param tree Splay tree used for rotating
+ * @param local_root Splay node used as root for left rotating
+ */
+void left_rotate(splay_tree * tree, splay_node * local_root)
+{
+    splay_node * right = local_root->right;
+    local_root->right = right->left;
+    if (right->left != NULL)
+    {
+        right->left->parent = local_root;
+    }
+
+    transplant(tree, local_root, right);
+
+    right->left = local_root;
+    right->left->parent = right;
+}
+
+/*!
+ * Rotates tree in right order
+ * @param tree Splay tree used for rotating
+ * @param local_root Splay node used as root for right rotating
+ */
+void right_rotate(splay_tree * tree, splay_node * local_root)
+{
+    splay_node * left = local_root->left;
+
+    local_root->left = left->right;
+    if (left->right != NULL)
+    {
+        left->right->parent = local_root;
+    }
+
+    transplant(tree, local_root, left);
+
+    left->right = local_root;
+    left->right->parent = left;
+}
+
+/**
+ * Splays tree based on pivot splay node 
+ * @param tree Splaying tree
+ * @param pivot_element Splay node used as base for rotating tree
+ */
+void splay(splay_tree * tree, splay_node * pivot_element)
+{
+    while (pivot_element != tree->root)
+    {
+        if (pivot_element->parent == tree->root)
         {
-            if (pivotElement == pivotElement->parent->leftChild)
+            if (pivot_element == pivot_element->parent->left)
             {
-                _RightRotate(tree, pivotElement->parent);
+                right_rotate(tree, pivot_element->parent);
             }
 
-            else if (pivotElement == pivotElement->parent->rightChild)
+            else if (pivot_element == pivot_element->parent->right)
             {
-                _LeftRotate(tree, pivotElement->parent);
+                left_rotate(tree, pivot_element->parent);
             }
         }
         else
         {
             // Zig-Zig step.
-            if (pivotElement == pivotElement->parent->leftChild &&
-                pivotElement->parent->parent != NULL &&
-                pivotElement->parent == pivotElement->parent->parent->leftChild)
+            if (pivot_element == pivot_element->parent->left &&
+                pivot_element->parent->parent != NULL &&
+                pivot_element->parent == pivot_element->parent->parent->left)
             {
 
-                _RightRotate(tree, pivotElement->parent->parent);
-                _RightRotate(tree, pivotElement->parent);
+                right_rotate(tree, pivot_element->parent->parent);
+                right_rotate(tree, pivot_element->parent);
             }
-            
-            else if (pivotElement->parent->parent != NULL &&
-                     pivotElement->parent->parent && pivotElement == pivotElement->parent->rightChild &&
-                     pivotElement->parent == pivotElement->parent->parent->rightChild)
+
+            else if (pivot_element->parent->parent != NULL &&
+                     pivot_element->parent->parent && pivot_element == pivot_element->parent->right &&
+                     pivot_element->parent == pivot_element->parent->parent->right)
             {
-                _LeftRotate(tree, pivotElement->parent->parent);
-                _LeftRotate(tree, pivotElement->parent);
+                left_rotate(tree, pivot_element->parent->parent);
+                left_rotate(tree, pivot_element->parent);
             }
             // Zig-Zag step.
-            else if (pivotElement == pivotElement->parent->rightChild &&
-                     pivotElement->parent->parent != NULL &&
-                     pivotElement->parent == pivotElement->parent->parent->leftChild)
+            else if (pivot_element == pivot_element->parent->right &&
+                     pivot_element->parent->parent != NULL &&
+                     pivot_element->parent == pivot_element->parent->parent->left)
             {
 
-                _LeftRotate(tree, pivotElement->parent);
-                _RightRotate(tree, pivotElement->parent);
+                left_rotate(tree, pivot_element->parent);
+                right_rotate(tree, pivot_element->parent);
             }
-            else if (pivotElement == pivotElement->parent->leftChild &&
-                     pivotElement->parent->parent != NULL &&
-                     pivotElement->parent == pivotElement->parent->parent->rightChild)
+            else if (pivot_element == pivot_element->parent->left &&
+                     pivot_element->parent->parent != NULL &&
+                     pivot_element->parent == pivot_element->parent->parent->right)
             {
 
-                _RightRotate(tree, pivotElement->parent);
-                _LeftRotate(tree, pivotElement->parent);
+                right_rotate(tree, pivot_element->parent);
+                left_rotate(tree, pivot_element->parent);
             }
         }
     }
 }
 
-struct SplayNode *_Search(struct SplayTree *tree, int *key)
+splay_node * _search(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *), bool (* equal_predicate)(void *, void *))
 {
-    struct SplayNode *searchedElement = tree->root;
+    splay_node * _searchedElement = tree->root;
 
-    while (searchedElement != NULL)
+    while (_searchedElement != NULL)
     {
-        if (searchedElement->data < *key)
-            searchedElement = searchedElement->rightChild;
-        else if (*key < searchedElement->data)
-            searchedElement = searchedElement->leftChild;
-        else if (searchedElement->data == *key)
+        if (bigger_predicate(key, _searchedElement->data))
         {
-            _Splay(tree, searchedElement);
-            return searchedElement;
+            _searchedElement = _searchedElement->right;
+        }
+        else if (equal_predicate(_searchedElement->data, key))
+        {
+            splay(tree, _searchedElement);
+            return _searchedElement;
+        }
+        else
+        {
+            _searchedElement = _searchedElement->left;
         }
     }
     return NULL;
 }
 
-struct SplayTree *newTree()
+/*!
+ * Creates new tree with NULL root
+ * @returns Returns created tree 
+ */
+splay_tree * new_tree()
 {
-    struct SplayTree *tree = malloc(sizeof(*tree));
+    splay_tree * tree = malloc(sizeof(*tree));
     tree->root = malloc(sizeof(*tree->root));
     tree->root = NULL;
     return tree;
 }
 
-void deleteTree(struct SplayTree *tree)
+/**
+ * Cleans memory which occupied for tree 
+ * @param tree Tree to remove
+ */
+void delete_tree(splay_tree * tree)
 {
     free(tree);
 }
 
-void Insert(struct SplayTree *tree, int *key)
+/*!
+ * Inserts splay node into tree with input key value
+ * @param tree Splay tree in which the key value will be inserted
+ * @param key Pointer on value which is used as data attribute value for the insertion node
+ * @param bigger_predicate Predicate for comparison on equality between two values
+ */
+void insert(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *))
 {
-    struct SplayNode *preInsertPlace = malloc(sizeof(*preInsertPlace));
-    preInsertPlace = NULL;
-    struct SplayNode *insertPlace = tree->root;
+    splay_node * pre_insert_place = malloc(sizeof(* pre_insert_place));
+    pre_insert_place = NULL;
+    splay_node * insert_place = tree->root;
 
-    while (insertPlace != NULL)
+    while (insert_place != NULL)
     {
-        preInsertPlace = insertPlace;
+        pre_insert_place = insert_place;
 
-        if (insertPlace->data < *key)
-            insertPlace = insertPlace->rightChild;
-        else if (*key <= insertPlace->data)
-            insertPlace = insertPlace->leftChild;
+        if (bigger_predicate(key, insert_place->data))
+        {
+            insert_place = insert_place->right;
+        }
+        else
+        {
+            insert_place = insert_place->left;
+        }
     }
-    struct SplayNode *insertElement = newNode(key);
-    insertElement->parent = preInsertPlace;
-    if (preInsertPlace == NULL)
-        tree->root = insertElement;
-    else if (preInsertPlace->data < insertElement->data)
-        preInsertPlace->rightChild = insertElement;
-    else if (insertElement->data < preInsertPlace->data)
-        preInsertPlace->leftChild = insertElement;
-    _Splay(tree, insertElement);
+    splay_node * insert_element = new_node(key);
+    insert_element->parent = pre_insert_place;
+    if (pre_insert_place == NULL)
+    {
+        tree->root = insert_element;
+    }
+    else if (bigger_predicate(insert_element->data, pre_insert_place->data))
+    {
+        pre_insert_place->right = insert_element;
+    }
+    else if (bigger_predicate(pre_insert_place->data, insert_element->data))
+    {
+        pre_insert_place->left = insert_element;
+    }
+    splay(tree, insert_element);
 }
 
-void Remove(struct SplayTree *tree, int *key)
+/*!
+ * Removes node from splay tree node with input key data
+ * @param tree Splay tree with node to remove
+ * @param key Pointer on key value which has removing node as value of data attribute
+ * @param bigger_predicate Predicate for comparison on bigger/lower between two values
+ * @param equal_predicate Predicate for comparison on equlity between two value
+ */
+void remove_node(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *), bool (* equal_predicate)(void *, void *))
 {
-    struct SplayNode *removeElement = _Search(tree, key);
+    splay_node * removeElement = _search(tree, key, bigger_predicate, equal_predicate);
 
     if (removeElement != NULL)
     {
-        if (removeElement->rightChild == NULL)
-            _Transplant(tree, removeElement, removeElement->leftChild);
-        else if (removeElement->leftChild == NULL)
-            _Transplant(tree, removeElement, removeElement->rightChild);
+        if (removeElement->right == NULL)
+        {
+            transplant(tree, removeElement, removeElement->left);
+        }
+        else if (removeElement->left == NULL)
+        {
+            transplant(tree, removeElement, removeElement->right);
+        }
         else
         {
-            struct SplayNode *newLocalRoot = _Minimum(removeElement->rightChild);
+            splay_node *newLocalRoot = minimum(removeElement->right);
 
             if (newLocalRoot->parent != removeElement)
             {
 
-                _Transplant(tree, newLocalRoot, newLocalRoot->rightChild);
+                transplant(tree, newLocalRoot, newLocalRoot->right);
 
-                newLocalRoot->rightChild = removeElement->rightChild;
-                newLocalRoot->rightChild->parent = newLocalRoot;
+                newLocalRoot->right = removeElement->right;
+                newLocalRoot->right->parent = newLocalRoot;
             }
 
-            _Transplant(tree, removeElement, newLocalRoot);
+            transplant(tree, removeElement, newLocalRoot);
 
-            newLocalRoot->leftChild = removeElement->leftChild;
-            newLocalRoot->leftChild->parent = newLocalRoot;
+            newLocalRoot->left = removeElement->left;
+            newLocalRoot->left->parent = newLocalRoot;
 
-            _Splay(tree, newLocalRoot);
+            splay(tree, newLocalRoot);
         }
 
         free(removeElement);
     }
 }
 
-bool Search(struct SplayTree *tree, int *key)
-{
-    return _Search(tree, key) != NULL;
-}
-
-bool isEmpty(struct SplayTree *tree)
+/**
+ * Checks if tree is empty 
+ * @param tree Splay tree which is used for checking on emptiness
+ * @returns Returns True or False based on emptiness of tree
+ */
+bool is_empty(splay_tree * tree)
 {
     return tree->root == NULL;
 }
 
-int Successor(struct SplayTree *tree, int *key)
+/**
+ * Finds successor of splay node with key value as data attribute
+ * @param tree Splay tree 
+ * @param key Pointer on key value used to find splay node with this key value as data attribute
+ * @param bigger_predicate Predicate for comparison on bigger/lower between two values
+ * @param equal_predicate Predicate for comparison on equlity between two value
+ * @returns Returns successor of element with key value as data attribute
+ */
+void * successor(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *), bool (* equal_predicate)(void *, void *))
 {
-    if (_Successor(tree, _Search(tree, key)) != NULL)
+    if (_successor(tree, _search(tree, key, bigger_predicate, equal_predicate)) != NULL)
     {
-        return _Successor(tree, _Search(tree, key))->data;
+        return _successor(tree, _search(tree, key, bigger_predicate, equal_predicate))->data;
     }
     else
     {
-        return -1;
+        return (void *) &error_value;
     }
 }
 
-int Predecessor(struct SplayTree *tree, int *key)
+/*!
+ * Finds predecessor of splay node with key value as data attibute
+ * @param tree Splay tree 
+ * @param key Pointer on key value which has splay node for which we find predcessor
+ * @param bigger_predicate Predicate for comparison on bigger/lower between two values
+ * @param equal_predicate Predicate for comparison on equlity between two values 
+ * @returns Return data from predcessor of splay node with input key
+ */
+void * predecessor(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *), bool (* equal_predicate)(void *, void *))
 {
-    if (_Predecessor(tree, _Search(tree, key)) != NULL)
+    if (_predecessor(tree, _search(tree, key, bigger_predicate, equal_predicate)) != NULL)
     {
-        return _Predecessor(tree, _Search(tree, key))->data;
+        return _predecessor(tree, _search(tree, key, bigger_predicate, equal_predicate))->data;
     }
     else
     {
-        return -1;
+        return error_value;
     }
 }
 
-int main(int argc, char const *argv[])
+/*!
+ * Looks for splay node in the tree based on key
+ * @param tree Splay tree which is used for searching node with input key
+ * @param key Pointer on key value which is used for splay node searching
+ * @param bigger_predicate Predicate which is used for comparison for bigger/lower
+ * @param equal_predicate Predicate which is used for comparison for equality
+ * @returns Returns True/False based on finding node with input key
+ */
+bool search(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *), bool (* equal_predicate)(void *, void *))
 {
-    struct SplayTree *tree = newTree();
-    int a = 8;
-    Insert(tree, &a);
-    printf("%d", Search(tree, &a));
-    return 0;
+    if (_search(tree, key, bigger_predicate, equal_predicate) != NULL){
+        return true;
+    }
+    return false;
 }
