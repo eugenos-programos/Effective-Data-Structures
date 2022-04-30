@@ -42,10 +42,12 @@ bool insert_test()
     {
         if (search(tree, b + index, bigger_predicate, equal_predicate))
         {
+            free(b);
             return false;
         }
         ++index;
     }
+    free(b);
     return true;
 }
 
@@ -93,6 +95,7 @@ bool max_min_test()
     } 
     bool max_test = 40 == *(unsigned int *)maximum(tree->root)->data;
     bool min_test = 0 == *(unsigned int *)minimum(tree->root)->data;
+    free(elements);
     return max_test && min_test;
 }
 

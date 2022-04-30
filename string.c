@@ -44,9 +44,8 @@ unsigned int strlen(char * string)
 
 splay_string * new_string(char * char_string)
 {
-    splay_string * string; // = malloc(sizeof(*string));
-    string->nodes_count = strlen(char_string);
-    string = malloc(sizeof(*string));
+    splay_string * string = malloc(sizeof(*string));
+    *(unsigned int *)&string->nodes_count = strlen(char_string);
     string->tree = new_tree();
     for (unsigned int i = 0; i < string->nodes_count; ++i)
     {
