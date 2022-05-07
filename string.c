@@ -1,4 +1,5 @@
 #include "tree.c"
+#include <string.h>
 
 typedef struct splay_string
 {
@@ -30,7 +31,7 @@ string_element * new_string_element(unsigned int index, char * element)
     return str_element;
 }
 
-unsigned int strlen(char * string)
+unsigned int strlength(char * string)
 {
     unsigned int length = 0;
     char el = string[length];
@@ -45,7 +46,7 @@ unsigned int strlen(char * string)
 splay_string * new_string(char * char_string)
 {
     splay_string * string = malloc(sizeof(*string));
-    *(unsigned int *)&string->nodes_count = strlen(char_string);
+    *(unsigned int *)&string->nodes_count = strlength(char_string);
     string->tree = new_tree();
     for (unsigned int i = 0; i < string->nodes_count; ++i)
     {
@@ -61,8 +62,9 @@ void set_indices(unsigned int * start_index, unsigned int * last_index, splay_st
     *last_index = string->nodes_count;
 }
 
-unsigned int find_substring(splay_string * string, splay_string * substring, unsigned int start_index, unsigned int end_index)
+unsigned int find_substring(splay_string * string, splay_string * substring)
 {
+   unsigned int start_index, end_index;
    set_indices(&start_index, &end_index, string); 
    unsigned int substring_length = substring->nodes_count;
    for (unsigned int i = 0; i < end_index - substring_length + 1; ++i)
@@ -91,12 +93,18 @@ unsigned int find_substring(splay_string * string, splay_string * substring, uns
    return not_found_code;
 }
 
+bool equal_strings(splay_string * first_string, splay_string * second_string)
+{
+    return find_substring(first_string, second_string) == 0 && find_substring(second_string, first_string) == 0;
+}
+
+
 unsigned int main(){
     char * string = "Hello!";
-    char * substring = "!";
+    char * substring = "ello!";
     splay_string * string_ = new_string(string);
     splay_string * substring_ = new_string(substring);
     unsigned int start, end;
-    printf("%d", find_substring(string_, substring_, start, end));
+    printf("\n%d", equal_strings(string_, substring_));
     return 0;
 }
