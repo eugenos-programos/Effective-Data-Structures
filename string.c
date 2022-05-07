@@ -62,6 +62,14 @@ void set_indices(unsigned int * start_index, unsigned int * last_index, splay_st
     *last_index = string->nodes_count;
 }
 
+char get_char_element(splay_string * string, unsigned int index)
+{
+    char empty_char;
+    string_element * str_el = new_string_element(index, empty_char);
+    string_element * str_char_el = (string_element *)_search(string->tree, (void *)(str_el), bigger_predicate, equal_predicate)->data;
+    return str_char_el->element;
+}
+
 unsigned int find_substring(splay_string * string, splay_string * substring)
 {
    unsigned int start_index, end_index;
@@ -73,13 +81,13 @@ unsigned int find_substring(splay_string * string, splay_string * substring)
        while (j < substring_length)
        {
            char empty_char;
-           string_element * str_element = get_char_element(string, i + j);
+           string_element * str_element = new_string_element(i + j, get_char_element(string, i + j));
            splay_node * str_node = _search(string->tree, (void *)(str_element), bigger_predicate, equal_predicate);
-           string_element * substr_element = new_string_element(j, NULL);
+           string_element * substr_element = new_string_element(j, get_char_element(string, j));
            splay_node * substr_node = _search(substring->tree, (void *)(substr_element), bigger_predicate, equal_predicate);
-           char * char_str_el = ((string_element *)(str_node->data))->element;
-           char * char_substr_el = ((string_element *)(substr_node->data))->element;
-           if (*char_str_el != *char_substr_el)
+           char char_str_el = ((string_element *)(str_node->data))->element;
+           char char_substr_el = ((string_element *)(substr_node->data))->element;
+           if (char_str_el != char_substr_el)
            {
                break;
            }
@@ -97,13 +105,6 @@ unsigned int find_substring(splay_string * string, splay_string * substring)
 bool equal_strings(splay_string * first_string, splay_string * second_string)
 {
     return find_substring(first_string, second_string) == 0 && find_substring(second_string, first_string) == 0;
-}
-
-char get_char_element(splay_string * string, unsigned int index)
-{
-    string_element * str_el = new_string_element(index, NULL);
-    string_element * str_char_el = (string_element *)_search(string->tree, (void *)(str_el), bigger_predicate, equal_predicate)->data;
-    return str_char_el->element;
 }
 
 bool delete_substring(splay_string * string, splay_string * substring)
@@ -129,6 +130,6 @@ unsigned int main(){
     splay_string * string_ = new_string(string);
     splay_string * substring_ = new_string(substring);
     unsigned int start, end;
-    printf("%c", string[2]);
+    printf("%c", get_char_element(string_, 5));
     return 0;
 }
