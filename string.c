@@ -10,7 +10,7 @@ typedef struct splay_string
 typedef struct string_element
 {
     unsigned int index;
-    char * element;
+    char element;
 } string_element;
 
 bool bigger_predicate(void * first_element, void * second_element)
@@ -23,7 +23,7 @@ bool equal_predicate(void * first_element, void * second_element)
     return ((string_element *)(first_element))->index == ((string_element *)(second_element))->index;
 }
 
-string_element * new_string_element(unsigned int index, char * element)
+string_element * new_string_element(unsigned int index, char element)
 {
     string_element * str_element = malloc(sizeof(*str_element));
     str_element->element = element;
@@ -50,7 +50,7 @@ splay_string * new_string(char * char_string)
     string->tree = new_tree();
     for (unsigned int i = 0; i < string->nodes_count; ++i)
     {
-        string_element * element = new_string_element(i, &char_string[i]);
+        string_element * element = new_string_element(i, char_string[i]);
         insert(string->tree, element, bigger_predicate);
     }
     return string;
@@ -72,7 +72,8 @@ unsigned int find_substring(splay_string * string, splay_string * substring)
        unsigned int j = 0;
        while (j < substring_length)
        {
-           string_element * str_element = new_string_element(i + j, NULL);
+           char empty_char;
+           string_element * str_element = get_char_element(string, i + j);
            splay_node * str_node = _search(string->tree, (void *)(str_element), bigger_predicate, equal_predicate);
            string_element * substr_element = new_string_element(j, NULL);
            splay_node * substr_node = _search(substring->tree, (void *)(substr_element), bigger_predicate, equal_predicate);
@@ -98,6 +99,29 @@ bool equal_strings(splay_string * first_string, splay_string * second_string)
     return find_substring(first_string, second_string) == 0 && find_substring(second_string, first_string) == 0;
 }
 
+char get_char_element(splay_string * string, unsigned int index)
+{
+    string_element * str_el = new_string_element(index, NULL);
+    string_element * str_char_el = (string_element *)_search(string->tree, (void *)(str_el), bigger_predicate, equal_predicate)->data;
+    return str_char_el->element;
+}
+
+bool delete_substring(splay_string * string, splay_string * substring)
+{
+    unsigned int end_index = find_substring(string, substring);
+    unsigned int substring_length = substring->nodes_count;
+    char * new_string = "";
+
+    for (int i = 0; i < end_index; ++i)
+    {
+        /*
+        string_element * str_el = new_string_element(i, NULL);
+        char * str_char_el = _search(string->tree, (void *)(str_el), bigger_predicate, equal_predicate);
+        strcat(new_string, _search(string->tree, key));
+        */
+    }
+    
+}
 
 unsigned int main(){
     char * string = "Hello!";
@@ -105,6 +129,6 @@ unsigned int main(){
     splay_string * string_ = new_string(string);
     splay_string * substring_ = new_string(substring);
     unsigned int start, end;
-    printf("\n%d", equal_strings(string_, substring_));
+    printf("%c", string[2]);
     return 0;
 }
