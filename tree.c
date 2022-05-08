@@ -298,7 +298,7 @@ void insert(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, voi
     while (insert_place != NULL)
     {
         pre_insert_place = insert_place;
-
+        
         if (bigger_predicate(key, insert_place->data))
         {
             insert_place = insert_place->right;
@@ -435,4 +435,36 @@ bool search(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, voi
         return true;
     }
     return false;
+}
+
+void replace(splay_tree * tree, splay_node * u, splay_node * v)
+{
+    if (!u->parent)
+    {
+        tree->root = v;
+    }
+    else if (u == u->parent->left)
+    {
+        u->parent->left = v;
+    }
+    else
+    {
+        u->parent->right = v;
+    }
+    if (v)
+    {
+        v->parent = u->parent;
+    }
+}
+
+void erase(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *), bool (* equal_predicate)(void *, void *))
+{
+    splay_node * z = _search(tree, key, bigger_predicate, equal_predicate);
+    if (!z) 
+    {
+        return;
+    }
+
+    splay(tree, z);
+    if (!z->left) replace()
 }
