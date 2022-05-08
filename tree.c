@@ -466,5 +466,26 @@ void erase(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void
     }
 
     splay(tree, z);
-    if (!z->left) replace()
+    if (!z->left)
+    {
+        replace(tree, z, z->right);
+    }
+    else if (!z->right)
+    {
+        replace(tree, z, z->left);
+    }
+    else
+    {
+        splay_node * y = minimum(z->right);
+        if (y->parent != z)
+        {
+            replace(y, y->right);
+            y->right = z->right;
+            y->right->parent = y;
+        }
+        replace(z, y);
+        y->left = z->left;
+        y->left->parent = y;
+    }
+    free(z);
 }
