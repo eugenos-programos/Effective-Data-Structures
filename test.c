@@ -24,7 +24,8 @@ bool insert_test()
     index = 0;
     while (index < 5)
     {
-        if (!search(tree, &a[index], bigger_predicate, equal_predicate))
+        bool was_found = search(tree, &a[index], bigger_predicate, equal_predicate);
+        if (!was_found)
         {
             return false;
         }
@@ -40,7 +41,8 @@ bool insert_test()
     index = 0;
     while (index < 5)
     {
-        if (search(tree, b + index, bigger_predicate, equal_predicate))
+        bool was_found = search(tree, b + index, bigger_predicate, equal_predicate);
+        if (was_found)
         {
             free(b);
             return false;

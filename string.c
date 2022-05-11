@@ -66,7 +66,13 @@ char get_char_element(splay_string * string, unsigned int index)
 {
     char empty_char;
     string_element * str_el = new_string_element(index, empty_char);
-    string_element * str_char_el = (string_element *)_search(string->tree, (void *)(str_el), bigger_predicate, equal_predicate)->data;
+    splay_node * node = _search(string->tree, (void *)(str_el), bigger_predicate, equal_predicate);
+    if (node == NULL)
+    {
+        printf("No element with index = %d", index);
+        exit(1);
+    }
+    string_element * str_char_el = (string_element *)(node->data);
     return str_char_el->element;
 }
 
@@ -107,29 +113,27 @@ bool equal_strings(splay_string * first_string, splay_string * second_string)
     return find_substring(first_string, second_string) == 0 && find_substring(second_string, first_string) == 0;
 }
 
-bool delete_substring(splay_string * string, splay_string * substring)
+void delete_substring(splay_string * string, splay_string * substring)
 {
-    unsigned int end_index = find_substring(string, substring);
+    unsigned int start_index = find_substring(string, substring);
     unsigned int substring_length = substring->nodes_count;
     char * new_string = "";
 
-    for (int i = 0; i < end_index; ++i)
+    for (unsigned int index = start_index; index < start_index + substring_length; ++index)
     {
-        /*
-        string_element * str_el = new_string_element(i, NULL);
-        char * str_char_el = _search(string->tree, (void *)(str_el), bigger_predicate, equal_predicate);
-        strcat(new_string, _search(string->tree, key));
-        */
+        char char_element = get_char_element(string, index);
+        string_element * str_el = new_string_element(index, char_element);
+        erase(string->tree, (void *)(str_el), bigger_predicate, equal_predicate);
     }
-    
+    *(unsigned int *)&string->nodes_count -= substring->nodes_count;
 }
 
 unsigned int main(){
     char * string = "Hello!";
-    char * substring = "ello!";
+    char * substring = "lo!";
     splay_string * string_ = new_string(string);
     splay_string * substring_ = new_string(substring);
-    unsigned int start, end;
-    printf("%c", get_char_element(string_, 5));
+    delete_substring(string_, substring_);
+    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%d", find_substring(string_, substring_));
     return 0;
 }

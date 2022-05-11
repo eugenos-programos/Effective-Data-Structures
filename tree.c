@@ -25,7 +25,7 @@ typedef struct splay_tree
  */
 splay_node * new_node(void * data)
 {
-    splay_node * node = malloc(sizeof(*node));
+    splay_node * node = (splay_node *)(malloc(sizeof(splay_node)));
     node->data = data;
     node->left = node->right = NULL;
     return node;
@@ -46,16 +46,14 @@ void delete_node(splay_node * node)
  * @param localRoot Splay node pointer on tree root
  * @returns Returns A minimal splay node  
  */
-splay_node * minimum(splay_node * localRoot)
+splay_node * minimum(splay_node * local_root)
 {
-    splay_node * minimum = localRoot;
 
-    while (minimum->left != NULL)
+    while (local_root->left)
     {
-        minimum = minimum->left;
+        local_root = local_root->left;
     }
-
-    return minimum;
+    return local_root;
 }
 
 
@@ -268,8 +266,7 @@ splay_node * _search(splay_tree * tree, void * key, bool (* bigger_predicate)(vo
  */
 splay_tree * new_tree()
 {
-    splay_tree * tree = malloc(sizeof(*tree));
-    tree->root = malloc(sizeof(*tree->root));
+    splay_tree * tree = (splay_tree *)(malloc(sizeof(splay_tree)));
     tree->root = NULL;
     return tree;
 }
@@ -292,8 +289,8 @@ void delete_tree(splay_tree * tree)
 void insert(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *))
 {
     splay_node * pre_insert_place = malloc(sizeof(* pre_insert_place));
-    pre_insert_place = NULL;
     splay_node * insert_place = tree->root;
+    pre_insert_place = NULL;
 
     while (insert_place != NULL)
     {
@@ -443,7 +440,7 @@ void replace(splay_tree * tree, splay_node * u, splay_node * v)
     {
         tree->root = v;
     }
-    else if (u == u->parent->left)
+    else if (u->parent && u == u->parent->left)
     {
         u->parent->left = v;
     }
@@ -459,33 +456,32 @@ void replace(splay_tree * tree, splay_node * u, splay_node * v)
 
 void erase(splay_tree * tree, void * key, bool (* bigger_predicate)(void *, void *), bool (* equal_predicate)(void *, void *))
 {
-    splay_node * z = _search(tree, key, bigger_predicate, equal_predicate);
-    if (!z) 
+    splay_node * node_to_delete = _search(tree, key, bigger_predicate, equal_predicate);
+    if (!node_to_delete)
     {
         return;
     }
-
-    splay(tree, z);
-    if (!z->left)
+    splay(tree, node_to_delete);
+    if (!node_to_delete->left)
     {
-        replace(tree, z, z->right);
+        replace(tree ,node_to_delete, node_to_delete->right);
     }
-    else if (!z->right)
+    else if (!node_to_delete->right)
     {
-        replace(tree, z, z->left);
+        replace(tree, node_to_delete, node_to_delete->left);
     }
     else
     {
-        splay_node * y = minimum(z->right);
-        if (y->parent != z)
+        splay_node * y = minimum(node_to_delete->right);
+        if (y->parent != node_to_delete)
         {
-            replace(y, y->right);
-            y->right = z->right;
+            replace(tree, y, y->right);
+            y->right = node_to_delete->right;
             y->right->parent = y;
         }
-        replace(z, y);
-        y->left = z->left;
+        replace(tree, node_to_delete, y);
+        y->left = node_to_delete->left;
         y->left->parent = y;
     }
-    free(z);
+    free(node_to_delete);
 }
