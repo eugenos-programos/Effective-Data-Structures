@@ -128,12 +128,31 @@ void delete_substring(splay_string * string, splay_string * substring)
     *(unsigned int *)&string->nodes_count -= substring->nodes_count;
 }
 
+void replace_substring(splay_string * string, splay_string * substring_before, splay_string * substring_after)
+{
+    if (substring_before->nodes_count != substring_after->nodes_count)
+    {
+        printf("Substrings lengths should be the same");
+        return;
+    }
+    unsigned int start_index = find_substring(string, substring_before);
+    unsigned int substring_length = substring_before->nodes_count;
+    for (unsigned int index = start_index; index < start_index + substring_length; ++index)
+    {
+        char char_element = get_char_element(string, index);
+        string_element * str_el = new_string_element(index, char_element);
+        splay_node * node = _search(string->tree, (void *)(str_el), bigger_predicate, equal_predicate);
+        ((string_element *)node->data)->element = get_char_element(substring_after, index - start_index);
+    }
+}
+
 unsigned int main(){
     char * string = "Hello!";
     char * substring = "lo!";
+    char * sa = "ul!";
     splay_string * string_ = new_string(string);
     splay_string * substring_ = new_string(substring);
-    delete_substring(string_, substring_);
-    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!%d", find_substring(string_, substring_));
+    splay_string * sa_ = new_string(sa);
+    replace_substring(string_, substring_, sa_);
     return 0;
 }
