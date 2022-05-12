@@ -73,6 +73,11 @@ char get_char_element(splay_string * string, unsigned int index)
         exit(1);
     }
     string_element * str_char_el = (string_element *)(node->data);
+    if (str_char_el == NULL)
+    {
+        printf("Null index");
+        exit(1);
+    }
     return str_char_el->element;
 }
 
@@ -136,6 +141,11 @@ void replace_substring(splay_string * string, splay_string * substring_before, s
         return;
     }
     unsigned int start_index = find_substring(string, substring_before);
+    if (start_index == -1)
+    {
+        printf("Substring doesn't found");
+        return;
+    }
     unsigned int substring_length = substring_before->nodes_count;
     for (unsigned int index = start_index; index < start_index + substring_length; ++index)
     {
@@ -146,6 +156,16 @@ void replace_substring(splay_string * string, splay_string * substring_before, s
     }
 }
 
+char * transform_to_char(splay_string * string)
+{
+    char * char_string = malloc(string->nodes_count + 1);
+    for (unsigned int index = 0; index < string->nodes_count; ++index)
+    {
+        char_string[index] = get_char_element(string, index);
+    }
+    return char_string;
+}
+
 unsigned int main(){
     char * string = "Hello!";
     char * substring = "lo!";
@@ -154,5 +174,6 @@ unsigned int main(){
     splay_string * substring_ = new_string(substring);
     splay_string * sa_ = new_string(sa);
     replace_substring(string_, substring_, sa_);
+    printf(transform_to_char(string_));
     return 0;
 }
